@@ -1,10 +1,12 @@
 import os
 import sys
+import json
 import logging
 import grequests
+import __main__
 
 logging.basicConfig(
-    filename="run.log",
+    filename=f"{__main__.__file__}.log",
     filemode="a",
     format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
     datefmt="%H:%M:%S",
@@ -12,9 +14,16 @@ logging.basicConfig(
 )
 
 
-def await_all(urls, callback, concurrency=10, show_progress=None):
+def await_all(urls, callback, concurrency=10, method="get", show_progress=None):
     # Setting all requests
-    rs = (grequests.get(url["url"], headers=url.get("headers", {})) for url in urls)
+    rs = (
+        getattr(grequests, method)(
+            url["url"],
+            headers=url.get("headers", {}),
+            data=url.get("body", None),
+        )
+        for url in urls
+    )
 
     # Sending multiple request at once (concurrency value)
     for index, response in grequests.imap_enumerated(rs, size=concurrency):
@@ -55,10 +64,61 @@ def save_response_to_folder(url, response, folder=None, extension=""):
 
     # If download failed
     if not response.ok:
-        logging.error(f"Error al descargar {filename}")
+        logging.error(f"{response.status_code} Error al descargar {filename}")
+        return
+
+    if response.text == "":
+        logging.error(f"Skipping {filename}, not found")
         return
 
     # Save downloaded file
     with open(os.path.join(folder, f"{filename}{extension}"), "w") as f:
         logging.info(f"Downloaded {filename}, saving to file")
         f.write(response.text)
+
+
+def download_metadata(
+    items,
+    url,
+    out_folder,
+    file_ext,
+    concurrency=10,
+    headers={},
+    method="get",
+    body_getter=lambda x: "",
+):
+    get_item_url = lambda item: dict(
+        name=item,
+        url=url.replace("{{slug}}", item),
+        headers=headers,
+        body=json.dumps(body_getter(item)),
+    )
+
+    get_item_file_path = lambda item: os.path.join(
+        out_folder, f"{item.replace('/', '\\')}{file_ext}"
+    )
+
+    urls = [
+        get_item_url(item)
+        for item in items
+        # Getting not downloaded list
+        if not os.path.exists(get_item_file_path(item))
+    ]
+
+    logging.info(f"Found {len(urls)} to download. Total: {len(items)}")
+
+    progress_handler = handle_progress(len(items), default=len(items) - len(urls))
+    callback = lambda url, response: save_response_to_folder(
+        url=url,
+        response=response,
+        folder=out_folder,
+        extension=file_ext,
+    )
+
+    await_all(
+        urls=urls,
+        callback=callback,
+        show_progress=lambda index: progress_handler.__next__(),
+        method=method,
+        concurrency=concurrency,
+    )
