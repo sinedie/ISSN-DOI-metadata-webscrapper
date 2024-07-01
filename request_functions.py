@@ -1,17 +1,9 @@
 import os
 import sys
 import json
-import logging
 import grequests
-import __main__
-
-logging.basicConfig(
-    filename=f"{__main__.__file__}.log",
-    filemode="a",
-    format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
-    datefmt="%H:%M:%S",
-    level=logging.DEBUG,
-)
+import logger
+import logging
 
 
 def await_all(urls, callback, concurrency=10, method="get", show_progress=None):
@@ -84,13 +76,16 @@ def download_metadata(
     file_ext,
     concurrency=10,
     headers={},
+    proxies={},
     method="get",
     body_getter=lambda x: "",
+    query_params=lambda x: "",
 ):
     get_item_url = lambda item: dict(
         name=item,
-        url=url.replace("{{slug}}", item),
+        url=url.replace("{{slug}}", item) + query_params(item),
         headers=headers,
+        proxies=proxies,
         body=json.dumps(body_getter(item)),
     )
 

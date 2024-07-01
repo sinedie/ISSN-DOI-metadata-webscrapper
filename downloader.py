@@ -1,9 +1,9 @@
-import logging
-import pandas as pd
+import logger
 from request_functions import download_metadata
 
 
 def download_dois_metadata(dois):
+    print("Downloading from https://doi.org")
     download_metadata(
         items=dois,
         url="https://doi.org/{{slug}}",
@@ -15,16 +15,21 @@ def download_dois_metadata(dois):
 
 
 def download_scimagojr_metadata(issns):
+    print("Downloading from https://www.scimagojr.com")
     download_metadata(
         items=issns,
         url="https://www.scimagojr.com/journalsearch.php?q={{slug}}",
         file_ext=".html",
         out_folder="./results/issn_scimagojr",
-        headers={"Accept": "text/html; charset=utf-8"},
+        headers={
+            "Accept": "text/html; charset=utf-8",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+        },
     )
 
 
 def download_minciencias_metadata(issns):
+    print("Downloading from https://scienti.minciencias.gov.co")
     download_metadata(
         items=issns,
         url="https://scienti.minciencias.gov.co/publindex/api/publico/revistasPublindex",
@@ -40,6 +45,7 @@ def download_minciencias_metadata(issns):
 
 
 def download_minciencias_homologada_metadata(issns):
+    print("Downloading from https://scienti.minciencias.gov.co (Homologadas)")
     download_metadata(
         items=issns,
         url="https://scienti.minciencias.gov.co/publindex/api/publico/revistasHomologadas",
@@ -51,16 +57,27 @@ def download_minciencias_homologada_metadata(issns):
     )
 
 
-filename = "./dataset.xlsx"
-logging.info(f"Reading {filename}")
-df = pd.read_excel(filename, na_filter=False)
+def download_scopus_metadata(authors):
+    print("Downloading from https://www.scopus.com")
 
-# Filter out duplicates
-unique_doi = df["DOI"].unique()  # TODO Clean this column
-unique_issn = df["ISSN"].unique()
+    def query_params(item):
+        items = item.split(",")
+        if len(items) == 2:
+            lastname, firstname = items
+            return f"?st1={lastname.strip()}&st2={firstname.strip()}"
 
-# DOWNLOAD
-# download_dois_metadata(unique_doi)
-# download_scimagojr_metadata(unique_issn)
-# download_minciencias_metadata(unique_issn)
-# download_minciencias_homologada_metadata(unique_issn)
+        # This should never happen, but just in case
+        return f"?st1={item}"
+
+    download_metadata(
+        items=authors,
+        url="https://www.scopus.com/results/authorNamesList.uri",
+        query_params=query_params,
+        file_ext=".html",
+        out_folder="./results/scopus",
+        headers={
+            "Accept": "text/html; charset=utf-8",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+        },
+        concurrency=2,
+    )

@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 import bibtexparser
+import logger
 from bs4 import BeautifulSoup
 from request_functions import handle_progress
 
@@ -51,35 +52,24 @@ def search_issn(issn: str, progress_handler=None):
         return search_results.find("a") is not None
 
 
-filename = "./dataset.xlsx"
-df = pd.read_excel(filename, na_filter=False)
+def search_authors(authors, progress_handler=None):
+    if progress_handler is not None:
+        progress_handler()
 
+    results = []
 
-progress_handler = handle_progress(len(df))
-df["ISSNFound"] = df["ISSN"].apply(
-    lambda issn: search_issn(
-        issn,
-        progress_handler=lambda: progress_handler.__next__(),
-    )
-)
+    for author in authors:
+        if author is None or author == "":
+            results.append([None, None])
+            continue
 
-progress_handler = handle_progress(len(df))
-df["author"] = df["DOI"].apply(
-    lambda doi: search_doi(
-        doi,
-        "author",
-        progress_handler=lambda: progress_handler.__next__(),
-    )
-)
-progress_handler = handle_progress(len(df))
-df["url"] = df["DOI"].apply(
-    lambda doi: search_doi(
-        doi,
-        "url",
-        progress_handler=lambda: progress_handler.__next__(),
-    )
-)
+        filename = os.path.join("./results/scopus", f"{author}.html")
+        try:
+            pd_search = pd.read_html(filename, match="Country/Territory")
 
+            author_info = pd_search[0].iloc[0]
+            results.append([author_info["City"], author_info["Country/Territory"]])
+        except:
+            results.append([None, None])
 
-fileout = "_out".join(os.path.splitext(filename))
-df.to_excel(fileout, index=False)
+    return [x for user in results for x in user]

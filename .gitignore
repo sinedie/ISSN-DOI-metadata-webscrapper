@@ -1,7 +1,7 @@
 venv
-pages
 __pycache__
 *.pyc
-dois
 backup
 *.log
+logs
+results
