@@ -29,6 +29,10 @@ def download_scimagojr_metadata(issns):
 
 
 def download_minciencias_metadata(issns):
+    # SOLO ES NECESARIO DESCARGAR ESTE, QUE SE TRAE TODAS
+    issns = [""]
+    folder = "./results/issn_minciencias/"
+
     print("Downloading from https://scienti.minciencias.gov.co")
     download_metadata(
         items=issns,
@@ -40,8 +44,18 @@ def download_minciencias_metadata(issns):
             "txtIssn": issn.replace("-", ""),
         },
         file_ext=".json",
-        out_folder="./results/issn_minciencias",
+        out_folder=folder,
     )
+
+    with open(f"{folder}.json") as f:
+        magazines = json.load(f)
+        for magazine in magazines:
+            if magazine["ISSNS"] is None:
+                continue
+
+            for issn in magazine["ISSNS"].split(","):
+                with open(f"{folder}{issn.strip()}.json", "w") as fout:
+                    json.dump(magazine, fout)
 
 
 def download_minciencias_homologada_metadata(issns):
