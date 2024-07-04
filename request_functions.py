@@ -49,7 +49,7 @@ def show_progress(total: int, progress: int):
 
 
 def save_response_to_folder(url, response, folder=None, extension=""):
-    filename = url["name"].replace("/", "\\")
+    filename = url["name"].replace("/", "@")
     folder = folder or "./"
     # Create folder if not found
     os.makedirs(folder, exist_ok=True)
@@ -90,7 +90,7 @@ def download_metadata(
     )
 
     get_item_file_path = lambda item: os.path.join(
-        out_folder, f"{item.replace('/', '\\')}{file_ext}"
+        out_folder, f"{item.replace('/', '@')}{file_ext}"
     )
 
     urls = [

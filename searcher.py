@@ -13,7 +13,7 @@ def search_doi(doi: str, entry: str, progress_handler=None):
     if doi == "":
         return ""
 
-    fname = os.path.join("./results/dois", f"{doi.replace('/', '\\')}.bib")
+    fname = os.path.join("./results/dois", f"{doi.replace('/', '@')}.bib")
     if not os.path.exists(fname):
         return ""
 
