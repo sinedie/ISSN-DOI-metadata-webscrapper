@@ -52,7 +52,7 @@ def download_minciencias_metadata():
         out_folder=folder,
     )
 
-    with open(f"{folder}.json") as f:
+    with open(f"{folder}.json", encoding="utf-8") as f:
         magazines = json.load(f)
         for magazine in magazines:
             if magazine["ISSNS"] is None:
@@ -126,7 +126,7 @@ def download_pybliometrics_authors_data():
 
     authors = {}
     for filename in dois:
-        with open(filename) as f:
+        with open(filename, encoding="utf-8") as f:
             data = json.load(f)
 
             for author in data["authors"]['author']:

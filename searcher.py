@@ -16,7 +16,7 @@ def search_doi_entry(doi: str, entry: str, progress_handler=None):
     if not os.path.exists(fname):
         return ""
 
-    with open(fname) as bibtex_file:
+    with open(fname, encoding="utf-8") as bibtex_file:
         bibtex_database = bibtexparser.load(bibtex_file)
         entries = bibtex_database.get_entry_list()
 
@@ -38,7 +38,7 @@ def search_doi_authors(doi: str, progress_handler=None, max_authors=10):
     if not os.path.exists(fname):
         return [None] * max_authors
 
-    with open(fname) as f:
+    with open(fname, encoding="utf-8") as f:
         data = json.load(f)
         authors = [author["@auid"] for author in data["authors"]["author"]]
         if len(authors) > max_authors:
@@ -61,7 +61,7 @@ def search_authors_info(author: str, progress_handler=None):
     if not os.path.exists(fname):
         return [None] * 4
 
-    with open(fname) as f:
+    with open(fname, encoding="utf-8") as f:
         author_data = json.load(f)
 
         affiliation_id = author_data["affiliation-current"]["@id"]
@@ -100,7 +100,7 @@ def search_issn(issn: str, progress_handler=None):
     if not os.path.exists(filename):
         return False
 
-    with open(filename, "r") as f:
+    with open(filename, encoding="utf-8") as f:
         soup = BeautifulSoup(f, "html.parser")
         search_results = soup.find("div", class_="search_results")
         return search_results.find("a") is not None
