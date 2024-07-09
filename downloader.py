@@ -115,6 +115,7 @@ def download_pybliometrics_doi_data(dois):
         if doi == "" or doi is None:
             continue
 
+        print(doi)
         article = AbstractRetrieval(doi)
         with open(f"{folder}/{doi.replace("/", "@")}.json", "w", encoding="utf-8") as f:
             json.dump(article._json, f)

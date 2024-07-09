@@ -30,9 +30,8 @@ logging.info(f"Reading {filename}")
 df = pd.read_excel(filename, na_filter=False)
 
 # Cleaning dois
-new_doi_column = "CLEAN_DOI"
-logging.info(f"Cleaning DOIS and saving to {new_doi_column} column")
-df[new_doi_column] = df["DOI"].apply(clean_doi)
+logging.info(f"Cleaning DOIS and saving to CLEAN_DOI column")
+df["CLEAN_DOI"] = df["DOI"].apply(clean_doi)
 
 # Filter out duplicates
 unique_doi = df["CLEAN_DOI"].unique()

@@ -56,7 +56,7 @@ def save_response_to_folder(url, response, folder=None, extension=""):
 
     # If download failed
     if not response.ok:
-        logging.error(f"{response.status_code} Error al descargar {filename}")
+        logging.error(f"{response.status_code} Error al descargar {url["name"]}")
         return
 
     if response.text == "":
