@@ -64,7 +64,9 @@ def save_response_to_folder(url, response, folder=None, extension=""):
         return
 
     # Save downloaded file
-    with open(os.path.join(folder, f"{filename}{extension}"), "w") as f:
+    with open(
+        os.path.join(folder, f"{filename}{extension}"), "w", encoding="utf-8"
+    ) as f:
         logging.info(f"Downloaded {filename}, saving to file")
         f.write(response.text)
 

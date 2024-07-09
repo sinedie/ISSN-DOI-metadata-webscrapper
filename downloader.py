@@ -59,7 +59,7 @@ def download_minciencias_metadata():
                 continue
 
             for issn in magazine["ISSNS"].split(","):
-                with open(f"{folder}{issn.strip()}.json", "w") as fout:
+                with open(f"{folder}{issn.strip()}.json", "w", encoding="utf-8") as fout:
                     json.dump(magazine, fout)
 
 
@@ -115,7 +115,7 @@ def download_pybliometrics_doi_data(dois):
             continue
 
         article = AbstractRetrieval(doi)
-        with open(f"{folder}/{doi.replace("/", "@")}.json", "w") as f:
+        with open(f"{folder}/{doi.replace("/", "@")}.json", "w", encoding="utf-8") as f:
             json.dump(article._json, f)
 
 
@@ -144,5 +144,5 @@ def download_pybliometrics_authors_data():
         progress.__next__()
 
         author_data = AuthorRetrieval(uid)
-        with open(f"{folder}/{uid}.json", "w") as f:
+        with open(f"{folder}/{uid}.json", "w", encoding="utf-8") as f:
             json.dump(author_data._json, f)
