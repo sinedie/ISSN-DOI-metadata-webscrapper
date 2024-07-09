@@ -70,7 +70,7 @@ def save_response_to_folder(url, response, folder=None, extension=""):
         encoding="utf-8",
     ) as f:
         logging.info(f"Downloaded {filename}, saving to file")
-        f.write(response.text.encode("utf-8"))
+        f.write(response.text)
 
 
 def download_metadata(
