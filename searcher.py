@@ -1,12 +1,11 @@
 import os
-import pandas as pd
+import json
 import bibtexparser
 import logger
 from bs4 import BeautifulSoup
-from request_functions import handle_progress
 
 
-def search_doi(doi: str, entry: str, progress_handler=None):
+def search_doi_entry(doi: str, entry: str, progress_handler=None):
     if progress_handler is not None:
         progress_handler()
 
@@ -25,6 +24,61 @@ def search_doi(doi: str, entry: str, progress_handler=None):
             return entries[0].get(entry, "")
 
         return ""
+
+
+def search_doi_authors(doi: str, progress_handler=None, max_authors=10):
+    if progress_handler is not None:
+        progress_handler()
+
+    if doi == "":
+        return [None] * max_authors
+
+    fname = os.path.join("./results/dois_scopus", f"{doi.replace('/', '@')}.json")
+
+    if not os.path.exists(fname):
+        return [None] * max_authors
+
+    with open(fname) as f:
+        data = json.load(f)
+        authors = [author["@auid"] for author in data["authors"]["author"]]
+        if len(authors) > max_authors:
+            authors = authors[:max_authors]
+        if len(authors) != max_authors:
+            authors += [None] * (max_authors - len(authors))
+
+        return authors
+
+
+def search_authors_info(author: str, progress_handler=None):
+    if progress_handler is not None:
+        progress_handler()
+
+    if author is None:
+        return [None] * 4
+
+    fname = os.path.join("./results/author_scopus", f"{author}.json")
+
+    if not os.path.exists(fname):
+        return [None] * 4
+
+    with open(fname) as f:
+        author_data = json.load(f)
+
+        affiliation_id = author_data["affiliation-current"]["@id"]
+        affiliations = author_data["author-profile"]["affiliation-current"][
+            "affiliation"
+        ]
+        affiliation = next(
+            (aff for aff in affiliations if aff["@affiliation-id"] == affiliation_id),
+            None,
+        )
+
+        name = author_data["author-profile"]["name-variant"]["given-name"]
+        lastname = author_data["author-profile"]["name-variant"]["surname"]
+        city = affiliation["ip-doc"]["address"]["city"] if affiliation else ""
+        country = affiliation["ip-doc"]["address"]["country"] if affiliation else ""
+
+        return [name, lastname, city, country]
 
 
 def search_issn(issn: str, progress_handler=None):
@@ -50,26 +104,3 @@ def search_issn(issn: str, progress_handler=None):
         soup = BeautifulSoup(f, "html.parser")
         search_results = soup.find("div", class_="search_results")
         return search_results.find("a") is not None
-
-
-def search_authors(authors, progress_handler=None):
-    if progress_handler is not None:
-        progress_handler()
-
-    results = []
-
-    for author in authors:
-        if author is None or author == "":
-            results.append([None, None])
-            continue
-
-        filename = os.path.join("./results/scopus", f"{author}.html")
-        try:
-            pd_search = pd.read_html(filename, match="Country/Territory")
-
-            author_info = pd_search[0].iloc[0]
-            results.append([author_info["City"], author_info["Country/Territory"]])
-        except:
-            results.append([None, None])
-
-    return [x for user in results for x in user]

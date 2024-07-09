@@ -1,5 +1,10 @@
+import json
 import logger
-from request_functions import download_metadata
+import pybliometrics
+from request_functions import download_metadata, handle_progress
+
+pybliometrics.scopus.init()
+from pybliometrics.scopus import AbstractRetrieval, AuthorRetrieval
 
 
 def download_dois_metadata(dois):
@@ -28,7 +33,7 @@ def download_scimagojr_metadata(issns):
     )
 
 
-def download_minciencias_metadata(issns):
+def download_minciencias_metadata():
     # SOLO ES NECESARIO DESCARGAR ESTE, QUE SE TRAE TODAS
     issns = [""]
     folder = "./results/issn_minciencias/"
@@ -71,27 +76,73 @@ def download_minciencias_homologada_metadata(issns):
     )
 
 
-def download_scopus_metadata(authors):
-    print("Downloading from https://www.scopus.com")
+# def download_scopus_metadata(authors):
+#     print("Downloading from https://www.scopus.com")
 
-    def query_params(item):
-        items = item.split(",")
-        if len(items) == 2:
-            lastname, firstname = items
-            return f"?st1={lastname.strip()}&st2={firstname.strip()}"
+#     def query_params(item):
+#         items = item.split(",")
+#         if len(items) == 2:
+#             lastname, firstname = items
+#             return f"?st1={lastname.strip()}&st2={firstname.strip()}"
 
-        # This should never happen, but just in case
-        return f"?st1={item}"
+#         # This should never happen, but just in case
+#         return f"?st1={item}"
 
-    download_metadata(
-        items=authors,
-        url="https://www.scopus.com/results/authorNamesList.uri",
-        query_params=query_params,
-        file_ext=".html",
-        out_folder="./results/scopus",
-        headers={
-            "Accept": "text/html; charset=utf-8",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
-        },
-        concurrency=2,
-    )
+#     download_metadata(
+#         items=authors,
+#         url="https://www.scopus.com/results/authorNamesList.uri",
+#         query_params=query_params,
+#         file_ext=".html",
+#         out_folder="./results/scopus",
+#         headers={
+#             "Accept": "text/html; charset=utf-8",
+#             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36",
+#         },
+#         concurrency=2,
+#     )
+
+
+def download_pybliometrics_doi_data(dois):
+    folder = "./results/dois_scopus"
+    progress = handle_progress(len(dois))
+
+    os.makedirs(folder, exist_ok=True)
+
+    for doi in dois:
+        progress.__next__()
+
+        if doi == "" or doi is None:
+            continue
+
+        article = AbstractRetrieval(doi)
+        with open(f"{folder}/{doi.replace("/", "@")}.json", "w") as f:
+            json.dump(article._json, f)
+
+
+def download_pybliometrics_authors_data():
+    folder = "./results/author_scopus"
+    os.makedirs(folder, exist_ok=True)
+    dois = os.listdir("./results/dois_scopus/")
+
+    authors = {}
+    for filename in dois:
+        with open(filename) as f:
+            data = json.load(f)
+
+            for author in data["authors"]['author']:
+                if not author.get("@auid", False):
+                    continue
+
+                authors[author["@auid"]] = author.get(
+                    "ce:indexed-name", 
+                    author.get("ce:given-name", "Desconocido")
+                )
+
+    progress = handle_progress(len(authors.values()))
+
+    for uid, name in authors.items():
+        progress.__next__()
+
+        author_data = AuthorRetrieval(uid)
+        with open(f"{folder}/{uid}.json", "w") as f:
+            json.dump(author_data._json, f)

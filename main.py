@@ -1,16 +1,26 @@
+import gevent.monkey
+
+gevent.monkey.patch_all()
+
 import os
 import logger
 import logging
 import pandas as pd
 from cleaner import clean_doi
 from downloader import (
-    download_dois_metadata,
     download_scimagojr_metadata,
     download_minciencias_metadata,
     download_minciencias_homologada_metadata,
-    download_scopus_metadata,
+    download_pybliometrics_doi_data,
+    download_pybliometrics_authors_data,
+    download_dois_metadata,
 )
-from searcher import search_doi, search_issn, search_authors
+from searcher import (
+    search_issn,
+    search_doi_authors,
+    search_doi_entry,
+    search_authors_info,
+)
 from request_functions import handle_progress
 
 # Reading file
@@ -34,9 +44,11 @@ download_scimagojr_metadata(unique_issn)
 
 logging.info("Download dois metadata")
 download_dois_metadata(unique_doi)
+download_pybliometrics_doi_data(unique_doi)
+download_pybliometrics_authors_data()
 
 logging.info("Download minciencias metadata")
-download_minciencias_metadata(unique_issn)
+download_minciencias_metadata()
 
 logging.info("Download minciencias homologada metadata")
 download_minciencias_homologada_metadata(unique_issn)
@@ -51,54 +63,45 @@ df["ISSNFound"] = df["ISSN"].apply(
     )
 )
 
-# Searching DOI metadata
-entries = ["author", "url"]
-for entry in entries:
-    print(f"Searching {entry}")
-    progress_handler = handle_progress(len(df))
-    df[entry] = df["DOI"].apply(
-        lambda doi: search_doi(
-            doi,
-            entry,
-            progress_handler=lambda: progress_handler.__next__(),
-        )
+print("Searching doi URL")
+progress_handler = handle_progress(len(df))
+entry = "url"
+df[entry] = df["CLEAN_DOI"].apply(
+    lambda doi: search_doi_entry(
+        doi,
+        entry,
+        progress_handler=lambda: progress_handler.__next__(),
     )
+)
 
-# Downloading authors data
-if "author" in df:
-    n_author_max = 10
-    logging.info("Getting unique authors")
-    df_authors = df[df["author"].str.len() > 0]["author"]
-    df_authors = df_authors.str.split(" and ", expand=True)
-    df_authors = df_authors.map(lambda x: x.strip() if isinstance(x, str) else x)
-    df_authors = df_authors.iloc[:, :n_author_max]
+print("Searching doi authors")
+progress_handler = handle_progress(len(df))
+max_authors = 10
+df_doi_authors = df["CLEAN_DOI"].apply(
+    lambda doi: search_doi_authors(
+        doi,
+        max_authors=max_authors,
+        progress_handler=lambda: progress_handler.__next__(),
+    ),
+)
 
-    authors = pd.unique(df_authors.values.ravel("K"))
-    authors = [a for a in authors if a is not None]
-    logging.info("Download Scopus Authors metadata")
-    download_scopus_metadata(authors)
+df_doi_authors = pd.DataFrame(df_doi_authors.to_list())
+df_doi_authors.columns = [f"Autor {i}" for i in range(max_authors)]
 
-    logging.info("Searching unique authors info")
-    df_authors = df["author"].str.split(" and ", expand=True)
-    df_authors = df_authors.map(lambda x: x.strip() if isinstance(x, str) else x)
-    df_authors = df_authors.iloc[:, :n_author_max]
-    df_authors.columns = [f"Author {i}" for i in range(n_author_max)]
+print("Searching authors data")
+progress_handler = handle_progress(len(df) * max_authors)
+df_doi_authors = df_doi_authors.map(
+    lambda author: search_authors_info(
+        author,
+        progress_handler=lambda: progress_handler.__next__(),
+    ),
+)
 
-    print(f"Searching authors data")
-    progress_handler = handle_progress(len(df))
-    authors_info = df_authors.apply(
-        lambda authors: search_authors(
-            authors,
-            progress_handler=lambda: progress_handler.__next__(),
-        ),
-        axis=1,
-        result_type="expand",
+print("Saving data")
+for c in df_doi_authors.columns:
+    df[[f"Nombre {c}", f"Apellido {c}", f"Ciudad {c}", f"Pais {c}"]] = pd.DataFrame(
+        df_doi_authors[c].tolist()
     )
-    columns = [[f"City author {i}", f"Country author {i}"] for i in range(n_author_max)]
-    authors_info.columns = [x for author in columns for x in author]
-
-    df = pd.concat([df, df_authors, authors_info], axis=1)
-
 
 fileout = "_out".join(os.path.splitext(filename))
 df.to_excel(fileout, index=False)
