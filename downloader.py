@@ -115,9 +115,14 @@ def download_pybliometrics_doi_data(dois):
         if doi == "" or doi is None:
             continue
 
+        filename = f"{folder}/{doi.replace("/", "@")}.json"
+
+        if os.path.exists(filename):
+            continue
+
         try:
             article = AbstractRetrieval(doi)
-            with open(f"{folder}/{doi.replace("/", "@")}.json", "w", encoding="utf-8") as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(article._json, f)
         except:
             print(f"ERROR al descargar {doi}")
@@ -148,9 +153,14 @@ def download_pybliometrics_authors_data():
     for uid, name in authors.items():
         progress.__next__()
 
+        filename = f"{folder}/{uid}.json"
+
+        if os.path.exists(filename):
+            continue
+
         try:
             author_data = AuthorRetrieval(uid)
-            with open(f"{folder}/{uid}.json", "w", encoding="utf-8") as f:
+            with open(filename, "w", encoding="utf-8") as f:
                 json.dump(author_data._json, f)
         except:
             print(f"ERROR al descargar {uid} {name}")
