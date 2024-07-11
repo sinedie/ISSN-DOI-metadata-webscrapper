@@ -60,7 +60,9 @@ def download_minciencias_metadata():
                 continue
 
             for issn in magazine["ISSNS"].split(","):
-                with open(f"{folder}{issn.strip()}.json", "w", encoding="utf-8") as fout:
+                with open(
+                    f"{folder}{issn.strip()}.json", "w", encoding="utf-8"
+                ) as fout:
                     json.dump(magazine, fout)
 
 
@@ -115,7 +117,7 @@ def download_pybliometrics_doi_data(dois):
         if doi == "" or doi is None:
             continue
 
-        filename = f"{folder}/{doi.replace("/", "@")}.json"
+        filename = f"{folder}/{doi.replace('/', '@')}.json"
 
         if os.path.exists(filename):
             continue
@@ -131,21 +133,21 @@ def download_pybliometrics_doi_data(dois):
 
 def download_pybliometrics_authors_data():
     folder = "./results/author_scopus"
+    dois_folder = "./results/dois_scopus/"
     os.makedirs(folder, exist_ok=True)
-    dois = os.listdir("./results/dois_scopus/")
+    dois = os.listdir(dois_folder)
 
     authors = {}
     for filename in dois:
-        with open(filename, encoding="utf-8") as f:
+        with open(os.path.join(dois_folder, filename), encoding="utf-8") as f:
             data = json.load(f)
 
-            for author in data["authors"]['author']:
+            for author in data["authors"]["author"]:
                 if not author.get("@auid", False):
                     continue
 
                 authors[author["@auid"]] = author.get(
-                    "ce:indexed-name", 
-                    author.get("ce:given-name", "Desconocido")
+                    "ce:indexed-name", author.get("ce:given-name", "Desconocido")
                 )
 
     progress = handle_progress(len(authors.values()))
@@ -165,4 +167,3 @@ def download_pybliometrics_authors_data():
         except:
             print(f"ERROR al descargar {uid} {name}")
             continue
-        
