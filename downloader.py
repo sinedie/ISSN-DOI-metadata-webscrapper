@@ -35,6 +35,11 @@ def download_scimagojr_metadata(issns):
 
 
 def download_minciencias_metadata():
+    filename = f"{folder}.json"
+
+    if os.path.exists(filename):
+        return
+
     # SOLO ES NECESARIO DESCARGAR ESTE, QUE SE TRAE TODAS
     issns = [""]
     folder = "./results/issn_minciencias/"
@@ -53,7 +58,7 @@ def download_minciencias_metadata():
         out_folder=folder,
     )
 
-    with open(f"{folder}.json", encoding="utf-8") as f:
+    with open(filename, encoding="utf-8") as f:
         magazines = json.load(f)
         for magazine in magazines:
             if magazine["ISSNS"] is None:
@@ -139,6 +144,9 @@ def download_pybliometrics_authors_data():
 
     authors = {}
     for filename in dois:
+        if not filename.endswith("json"):
+            continue
+
         with open(os.path.join(dois_folder, filename), encoding="utf-8") as f:
             data = json.load(f)
 
