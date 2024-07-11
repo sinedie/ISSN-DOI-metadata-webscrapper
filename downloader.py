@@ -142,6 +142,10 @@ def download_pybliometrics_authors_data():
         with open(os.path.join(dois_folder, filename), encoding="utf-8") as f:
             data = json.load(f)
 
+            if data["authors"] is None or data["authors"]["author"] is None:
+                print(f"Authors not found in {filename}")
+                continue
+
             for author in data["authors"]["author"]:
                 if not author.get("@auid", False):
                     continue
