@@ -35,6 +35,7 @@ def download_scimagojr_metadata(issns):
 
 
 def download_minciencias_metadata():
+    folder = "./results/issn_minciencias/"
     filename = f"{folder}.json"
 
     if os.path.exists(filename):
@@ -42,7 +43,6 @@ def download_minciencias_metadata():
 
     # SOLO ES NECESARIO DESCARGAR ESTE, QUE SE TRAE TODAS
     issns = [""]
-    folder = "./results/issn_minciencias/"
 
     print("Downloading from https://scienti.minciencias.gov.co")
     download_metadata(
