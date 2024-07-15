@@ -101,6 +101,6 @@ def search_issn(issn: str, progress_handler=None):
         return False
 
     with open(filename, encoding="utf-8") as f:
-        soup = BeautifulSoup(f, "html.parser")
+        soup = BeautifulSoup(f, "html.parser", from_encoding="latin-1")
         search_results = soup.find("div", class_="search_results")
         return search_results.find("a") is not None
