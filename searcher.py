@@ -100,7 +100,7 @@ def search_issn(issn: str, progress_handler=None):
     if not os.path.exists(filename):
         return False
 
-    with open(filename, encoding="utf-8") as f:
-        soup = BeautifulSoup(f, "html.parser", from_encoding="latin-1")
+    with open(filename, encoding="latin-1") as f:
+        soup = BeautifulSoup(f, "html.parser")
         search_results = soup.find("div", class_="search_results")
         return search_results.find("a") is not None
