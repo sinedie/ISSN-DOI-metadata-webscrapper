@@ -69,18 +69,39 @@ def search_authors_info(author: str, progress_handler=None):
         author_data = json.load(f)
 
         affiliation_id = author_data["affiliation-current"]["@id"]
-        affiliations = author_data["author-profile"]["affiliation-current"][
-            "affiliation"
-        ]
-        affiliation = next(
-            (aff for aff in affiliations if aff["@affiliation-id"] == affiliation_id),
-            None,
+
+        affiliations = (
+            author_data["author-profile"]
+            .get("affiliation-current", {})
+            .get("affiliation", None)
         )
 
-        name = author_data["author-profile"]["name-variant"]["given-name"]
-        lastname = author_data["author-profile"]["name-variant"]["surname"]
-        city = affiliation["ip-doc"]["address"]["city"] if affiliation else ""
-        country = affiliation["ip-doc"]["address"]["country"] if affiliation else ""
+        if affiliations is None:
+            affiliation = None
+        elif type(affiliations) is dict:
+            affiliation = affiliations
+        else:
+            affiliation = next(
+                (
+                    aff
+                    for aff in affiliations
+                    if aff["@affiliation-id"] == affiliation_id
+                ),
+                None,
+            )
+
+        name = author_data["author-profile"]["preferred-name"]["given-name"]
+        lastname = author_data["author-profile"]["preferred-name"]["surname"]
+        if (
+            affiliation is not None
+            and affiliation.get("ip-doc", None) is not None
+            and affiliation["ip-doc"].get("address", None) is not None
+        ):
+            city = affiliation["ip-doc"]["address"].get("city", "")
+            country = affiliation["ip-doc"]["address"].get("country", "")
+        else:
+            city = ""
+            country = ""
 
         return [name, lastname, city, country]
 
@@ -108,6 +129,5 @@ def search_issn(issn: str, progress_handler=None):
         soup = BeautifulSoup(f, "html.parser")
         search_results = soup.find("div", class_="search_results")
         if not search_results:
-            print(f"Search results not found {filename}")
             return False
         return search_results.find("a") is not None
