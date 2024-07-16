@@ -40,6 +40,10 @@ def search_doi_authors(doi: str, progress_handler=None, max_authors=10):
 
     with open(fname, encoding="utf-8", errors="replace") as f:
         data = json.load(f)
+
+        if data["authors"] is None or data["authors"]["author"] is None:
+            return [None] * max_authors
+
         authors = [author["@auid"] for author in data["authors"]["author"]]
         if len(authors) > max_authors:
             authors = authors[:max_authors]
