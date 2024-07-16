@@ -58,7 +58,7 @@ def download_minciencias_metadata():
         out_folder=folder,
     )
 
-    with open(filename, encoding="utf-8") as f:
+    with open(filename, encoding="utf-8", errors="replace") as f:
         magazines = json.load(f)
         for magazine in magazines:
             if magazine["ISSNS"] is None:
@@ -66,7 +66,10 @@ def download_minciencias_metadata():
 
             for issn in magazine["ISSNS"].split(","):
                 with open(
-                    f"{folder}{issn.strip()}.json", "w", encoding="utf-8"
+                    f"{folder}{issn.strip()}.json",
+                    "w",
+                    encoding="utf-8",
+                    errors="replace",
                 ) as fout:
                     json.dump(magazine, fout)
 
@@ -129,7 +132,7 @@ def download_pybliometrics_doi_data(dois):
 
         try:
             article = AbstractRetrieval(doi)
-            with open(filename, "w", encoding="utf-8") as f:
+            with open(filename, "w", encoding="utf-8", errors="replace") as f:
                 json.dump(article._json, f)
         except:
             print(f"ERROR al descargar {doi}")
@@ -147,7 +150,9 @@ def download_pybliometrics_authors_data():
         if not filename.endswith("json"):
             continue
 
-        with open(os.path.join(dois_folder, filename), encoding="utf-8") as f:
+        with open(
+            os.path.join(dois_folder, filename), encoding="utf-8", errors="replace"
+        ) as f:
             data = json.load(f)
 
             if data["authors"] is None or data["authors"]["author"] is None:
@@ -174,7 +179,7 @@ def download_pybliometrics_authors_data():
 
         try:
             author_data = AuthorRetrieval(uid)
-            with open(filename, "w", encoding="utf-8") as f:
+            with open(filename, "w", encoding="utf-8", errors="replace") as f:
                 json.dump(author_data._json, f)
         except:
             print(f"ERROR al descargar {uid} {name}")
