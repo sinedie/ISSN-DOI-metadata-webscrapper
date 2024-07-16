@@ -16,7 +16,7 @@ def search_doi_entry(doi: str, entry: str, progress_handler=None):
     if not os.path.exists(fname):
         return ""
 
-    with open(fname, encoding="utf-8") as bibtex_file:
+    with open(fname, encoding="latin-1") as bibtex_file:
         bibtex_database = bibtexparser.load(bibtex_file)
         entries = bibtex_database.get_entry_list()
 
