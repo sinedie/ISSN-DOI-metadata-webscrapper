@@ -117,7 +117,17 @@ def search_issn(issn: str, progress_handler=None):
     if os.path.exists(filename):
         return True
 
-    filename = os.path.join("./results/issn_minciencias", f"{issn}.json")
+    # Searching with "-"
+    clean_issn = issn.replace("-", "")
+    filename = os.path.join(
+        "./results/issn_minciencias",
+        f"{clean_issn[:4]}-{clean_issn[4:]}.json",
+    )
+    if os.path.exists(filename):
+        return True
+
+    # Searching without "-"
+    filename = os.path.join("./results/issn_minciencias", f"{clean_issn}.json")
     if os.path.exists(filename):
         return True
 
